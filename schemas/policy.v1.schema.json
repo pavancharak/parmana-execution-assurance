@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pavancharak/parmana-execution-assurance/schemas/policy.v1.schema.json",
+  "title": "PEA Policy v1",
+  "description": "Policy document for Parmana Execution Assurance. Draft v0.1. Amounts are integer minor units.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_version_schema",
+    "policy_id",
+    "policy_version",
+    "effective_from",
+    "owner",
+    "currencies",
+    "agents",
+    "beneficiaries",
+    "approval_rules",
+    "grants"
+  ],
+  "properties": {
+    "policy_version_schema": { "const": "1" },
+    "policy_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,62}$" },
+    "policy_version": { "type": "integer", "minimum": 1 },
+    "effective_from": { "type": "string", "format": "date-time" },
+    "effective_until": { "type": ["string", "null"], "format": "date-time" },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role"],
+      "properties": { "role": { "type": "string", "minLength": 1 } }
+    },
+    "currencies": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z]{3}$" }
+    },
+    "agents": { "type": "array", "items": { "$ref": "#/$defs/agent" } },
+    "beneficiaries": { "type": "array", "items": { "$ref": "#/$defs/beneficiary" } },
+    "approval_rules": { "type": "array", "items": { "$ref": "#/$defs/approvalRule" } },
+    "grants": { "type": "array", "items": { "$ref": "#/$defs/grant" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,62}$" },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_id", "owner_id", "key_id", "public_key", "status", "valid_from", "valid_until"],
+      "properties": {
+        "agent_id": { "$ref": "#/$defs/id" },
+        "owner_id": { "$ref": "#/$defs/id" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "public_key": { "type": "string", "pattern": "^ed25519:[A-Za-z0-9+/=_-]+$" },
+        "status": { "enum": ["active", "suspended", "revoked"] },
+        "valid_from": { "type": "string", "format": "date-time" },
+        "valid_until": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "beneficiary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["beneficiary_id", "account_hash", "account_salt_ref", "status", "added_by_approval"],
+      "properties": {
+        "beneficiary_id": { "$ref": "#/$defs/id" },
+        "account_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "account_salt_ref": { "$ref": "#/$defs/id" },
+        "name_on_record": { "type": "string" },
+        "status": { "enum": ["active", "suspended", "removed"] },
+        "added_by_approval": { "type": "string" }
+      }
+    },
+    "approvalRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "applies_to", "thresholds", "separation_of_duties"],
+      "properties": {
+        "rule_id": { "$ref": "#/$defs/id" },
+        "applies_to": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "currency"],
+          "properties": {
+            "action": { "enum": ["payment.create", "beneficiary.change", "policy.activate"] },
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+          }
+        },
+        "thresholds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["above", "required_approvals", "approver_groups"],
+            "properties": {
+              "above": { "type": "integer", "minimum": 0 },
+              "required_approvals": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "approver_groups": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "$ref": "#/$defs/id" }
+              },
+              "distinct_groups": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "separation_of_duties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["approver_not_owner", "approver_not_initiator"],
+          "properties": {
+            "approver_not_owner": { "const": true },
+            "approver_not_initiator": { "const": true }
+          }
+        }
+      }
+    },
+    "grant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["grant_id", "agent_id", "action", "currency", "per_transaction_limit", "daily_cap", "beneficiaries", "valid_window", "broad"],
+      "properties": {
+        "grant_id": { "$ref": "#/$defs/id" },
+        "agent_id": { "$ref": "#/$defs/id" },
+        "action": { "enum": ["payment.create"] },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "per_transaction_limit": { "type": "integer", "minimum": 1 },
+        "daily_cap": { "type": "integer", "minimum": 1 },
+        "rolling_window_cap": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["window", "limit"],
+          "properties": {
+            "window": { "type": "string", "pattern": "^PT[0-9]+H$" },
+            "limit": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "beneficiaries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "valid_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["days", "start_time", "end_time", "timezone"],
+          "properties": {
+            "days": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "enum": ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] }
+            },
+            "start_time": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+            "end_time": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+            "timezone": { "type": "string", "minLength": 1 }
+          }
+        },
+        "broad": { "type": "boolean" },
+        "valid_until": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "broad": { "const": true } }, "required": ["broad"] },
+          "then": { "required": ["valid_until"], "properties": { "valid_until": { "type": "string", "format": "date-time" } } }
+        }
+      ]
+    }
+  }
+}

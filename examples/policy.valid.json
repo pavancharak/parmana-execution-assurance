@@ -1,0 +1,73 @@
+{
+  "policy_version_schema": "1",
+  "policy_id": "ap-vendor-payments",
+  "policy_version": 14,
+  "effective_from": "2026-11-01T00:00:00Z",
+  "effective_until": null,
+  "owner": { "role": "finance-controller" },
+  "currencies": ["GBP"],
+  "agents": [
+    {
+      "agent_id": "agent-ap-bot-01",
+      "owner_id": "user-finance-lead-07",
+      "key_id": "agent-key-2026-03",
+      "public_key": "ed25519:3q2+7w8Kx1Yb0Qe5Zr9Tn4Hs6Uj8Vm2Lp0Dc1Fg3Ha=",
+      "status": "active",
+      "valid_from": "2026-11-01T00:00:00Z",
+      "valid_until": "2027-11-01T00:00:00Z"
+    }
+  ],
+  "beneficiaries": [
+    {
+      "beneficiary_id": "ben-acme-supplies",
+      "account_hash": "sha256:4f1c0e8a2b9d7c6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e",
+      "account_salt_ref": "salt-2026-11",
+      "name_on_record": "Acme Supplies Ltd",
+      "status": "active",
+      "added_by_approval": "appr-2f11"
+    }
+  ],
+  "approval_rules": [
+    {
+      "rule_id": "standard-payment",
+      "applies_to": { "action": "payment.create", "currency": "GBP" },
+      "thresholds": [
+        {
+          "above": 0,
+          "required_approvals": 1,
+          "approver_groups": ["finance-approvers"]
+        },
+        {
+          "above": 1000000,
+          "required_approvals": 2,
+          "approver_groups": ["finance-approvers", "finance-controllers"],
+          "distinct_groups": true
+        }
+      ],
+      "separation_of_duties": {
+        "approver_not_owner": true,
+        "approver_not_initiator": true
+      }
+    }
+  ],
+  "grants": [
+    {
+      "grant_id": "grant-ap-bot-01-vendors",
+      "agent_id": "agent-ap-bot-01",
+      "action": "payment.create",
+      "currency": "GBP",
+      "per_transaction_limit": 500000,
+      "daily_cap": 2000000,
+      "rolling_window_cap": { "window": "PT24H", "limit": 2000000 },
+      "beneficiaries": ["ben-acme-supplies"],
+      "valid_window": {
+        "days": ["MON", "TUE", "WED", "THU", "FRI"],
+        "start_time": "08:00",
+        "end_time": "18:00",
+        "timezone": "Europe/London"
+      },
+      "broad": false,
+      "valid_until": null
+    }
+  ]
+}
