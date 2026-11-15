@@ -164,10 +164,6 @@
         {
           "if": { "properties": { "broad": { "const": true } }, "required": ["broad"] },
           "then": { "required": ["valid_until"], "properties": { "valid_until": { "type": "string", "format": "date-time" } } }
-        },
-        {
-          "if": { "required": ["rolling_window_cap"] },
-          "then": { "properties": { "rolling_window_cap": { "type": "object" } } }
         }
       ]
     }

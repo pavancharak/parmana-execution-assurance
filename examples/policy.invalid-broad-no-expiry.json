@@ -1,0 +1,29 @@
+{
+  "policy_version_schema": "1",
+  "policy_id": "ap-vendor-payments",
+  "policy_version": 15,
+  "effective_from": "2026-11-01T00:00:00Z",
+  "owner": { "role": "finance-controller" },
+  "currencies": ["GBP"],
+  "agents": [],
+  "beneficiaries": [],
+  "approval_rules": [],
+  "grants": [
+    {
+      "grant_id": "grant-broad-no-expiry",
+      "agent_id": "agent-ap-bot-01",
+      "action": "payment.create",
+      "currency": "GBP",
+      "per_transaction_limit": 500000,
+      "daily_cap": 2000000,
+      "beneficiaries": ["ben-acme-supplies"],
+      "valid_window": {
+        "days": ["MON"],
+        "start_time": "08:00",
+        "end_time": "18:00",
+        "timezone": "Europe/London"
+      },
+      "broad": true
+    }
+  ]
+}
